@@ -2,13 +2,14 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <title><%= title%></title>
 </head>
 
 <body>
     <form name="addform" action="userAdd" method="post" accept-charset="utf-8" >
-        <h1>Account - Add</h1>
+        <h1><%= title%></h1>
         <div>
             <label>userid：</label>
             <input type="text" name="userid" placeholder="userid" />

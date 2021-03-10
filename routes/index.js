@@ -1,124 +1,105 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
-// /* GET home page. */
-// router.get('/', function(req, res, next) {
-//   res.render('index', { title: 'Express' });
-// });
+/* home page. */
+router.get('/', (req, res, next)=> {
+  // res.render('index', { title: 'Express' });
 
-// module.exports = router;
+  const {con} = req;
 
-// home page
-router.get('/', function(req, res, next) {
+  const {user} = req.query;
 
-  var db = req.con;
-  var data = "";
-
-  var user = "";
-  var user = req.query.user;
-
-  var filter = "";
-  if (user) {
-      filter = 'WHERE userid = ?';
+  let filter = "";
+  if(user){
+    filter = 'WHERE userid = ?';
   }
 
-  db.query('SELECT * FROM account ' + filter, user, function(err, rows) {
-      if (err) {
-          console.log(err);
-      }
-      var data = rows;
+  con.query(`SELECT * FROM info ${filter}` ,user , (err, rows)=>{
+    if(err){
+      console.log(err);
+    }
+    let data = rows;
 
-      // use index.ejs
-      res.render('index', { title: 'Account Information', data: data, user: user });
-  });
+    // usee index.ejs
+    res.render('index',{title:'Personal Information', data, user});
 
+  })
 });
 
 // add page
-router.get('/add', function(req, res, next) {
+router.get('/add', (req, res, next)=>{
 
   // use userAdd.ejs
-  res.render('userAdd', { title: 'Add User'});
+  res.render('userAdd',{title:'Add info'});
 });
 
-//add post
-router.post('/userAdd', function(req, res, next) {
-
-  // use userAdd.ejs
-  res.render('userAdd', { title: 'Add User'});
-
-  var db = req.con;
-
-  var sql = {
-      userid: req.body.userid,
-      password: req.body.password,
-      email: req.body.email
-  };
+// add post
+router.post('/userAdd', (req, res, next)=>{
+  const {con} = req;
+  let {userid, password, email} = req.body
+  let sql = {
+    userid,
+    password,
+    email,
+  }
 
   //console.log(sql);
-  var qur = db.query('INSERT INTO account SET ?', sql, function(err, rows) {
-      if (err) {
-          console.log(err);
-      }
-      res.setHeader('Content-Type', 'application/json');
-      res.redirect('/');
+  let qur = con.query(`INSERT INTO info SET ?`,sql, (err, rows) => {
+    if (err) {
+        console.log(err);
+    }
+    res.setHeader('Content-Type', 'application/json');
+    res.redirect('/');
   });
-
 });
-
-
 
 // edit page
-router.get('/userEdit', function(req, res, next) {
+router.get('/userEdit', (req, res, next) => {
+  const {id} = req.query;
+  const {con} = req;
 
-  var id = req.query.id;
-  var db = req.con;
-  var data = "";
+  con.query(`SELECT * FROM info WHERE id = ${id}`, (err,rows) => {
+    if(err){
+      console.log(err);
+    }
 
-  db.query('SELECT * FROM account WHERE id = ?', id, function(err, rows) {
-      if (err) {
-          console.log(err);
-      }
-
-      var data = rows;
-      res.render('userEdit', { title: 'Edit Account', data: data });
+    let data = rows
+    res.render('userEdit',{title:'Edit info', data:data});
   });
-
 });
 
-router.post('/userEdit', function(req, res, next) {
-
-  var db = req.con;
-  var id = req.body.id;
-
-  var sql = {
-      userid: req.body.userid,
-      password: req.body.password,
-      email: req.body.email
+// edit post
+router.post('/userEdit', (req, res, next) => {
+  const {con} = req;
+  let id = req.body.id;
+  const {userid, password, email} = req.body
+  let sql = {
+    userid,
+    password,
+    email,
   };
 
-  var qur = db.query('UPDATE account SET ? WHERE id = ?', [sql, id], function(err, rows) {
-      if (err) {
-          console.log(err);
-      }
+  let qur = con.query(`UPDATE info SET ${sql} WHERE id = ${id}]`, (err, rows) => {
+    if(err){
+      console.log(err);
+    }
 
-      res.setHeader('Content-Type', 'application/json');
-      res.redirect('/');
-  });
-
-});
-
-router.get('/userDelete', function(req, res, next) {
-
-  var id = req.query.id;
-  var db = req.con;
-
-  var qur = db.query('DELETE FROM account WHERE id = ?', id, function(err, rows) {
-      if (err) {
-          console.log(err);
-      }
-      res.redirect('/');
+    res.setHeader('Content-Type','application/json');
+    res.redirect('/');
   });
 });
 
+// delete get
+router.get('/userDelete', (req, res, next) => {
+
+  const {id} = req.query;
+  const {con} = req;
+
+  let qur = con.query(`DELETE FROM info WHERE id = ${id}`, (err, rows) => {
+      if (err) {
+          console.log(err);
+      }
+      res.redirect('/');
+  });
+});
 module.exports = router;

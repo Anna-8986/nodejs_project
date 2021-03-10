@@ -1,69 +1,99 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+let createError = require('http-errors');
+let express = require('express');
+let path = require('path');
+let cookieParser = require('cookie-parser');
+let logger = require('morgan');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+let indexRouter = require('./routes/index');
+let usersRouter = require('./routes/users');
 
-var users = require('./routes/users');
+//BD
+let mysql = require("mysql");
+const { resolveSoa } = require('dns');
 
-// DataBase 
-var mysql = require("mysql");
+// dotenv
+require('dotenv').config()
 
-var con = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "12345678",
-    database: "test"
+// dotenv process.env 
+const {host, user, password, database} = process.env
+const con = mysql.createConnection({
+  host,
+  user,
+  password,
+  database,
 });
 
-con.connect(function(err) {
-    if (err) {
-        console.log('connecting error',err);
-        return;
-    }
-    console.log('connecting success');
+
+con.connect((err)=>{
+  if(err){
+    console.log('connecting error! reason:',err);
+    return;
+  }
+  console.log('connecting success!');
 });
 
-var app = express();
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-// db state
-app.use(function(req, res, next) {
-  req.con = con;
-  next();
-});
+let app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+// app.use(bodyParser.json())
+// app.use(bodyParser.urlencoded({extended:false}))
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// db state
+app.use((req, res, next)=>{
+  req.con = con;
+  next();
+});
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+app.use((req, res, next)=> {
+  var err = new Error('Not Found!');
+  err.status = 404;
+  next(err);
 });
 
 // error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
+// development error handler
+// will print stacktrace
+if(app.get('env') === 'development'){
+  app.use((err, req, res, next)=>{
+    res.status(err.status || 500);
+    res.render('error',{
+      message:err.message,
+      error:err
+    });
+  });
+}
+
+// productiion error handler
+// no stacktraces leaker to user
+
+app.use((err, req, res, next)=>{
   res.status(err.status || 500);
-  res.render('error');
+  res.render('error',{
+    message: err.message,
+    error:{}
+  });
 });
+// app.use(function(err, req, res, next) {
+//   // set locals, only providing error in development
+//   res.locals.message = err.message;
+//   res.locals.error = req.app.get('env') === 'development' ? err : {};
+
+//   // render the error page
+//   res.status(err.status || 500);
+//   res.render('error');
+// });
 
 module.exports = app;
